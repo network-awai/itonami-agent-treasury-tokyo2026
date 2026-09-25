@@ -15,6 +15,10 @@ private workspace code.
   transaction planning with balance, allowance, minimum-output, recipient
   and deadline checks.
 - A public demo evidence page served at treasury.itonami.cloud.
+- The demo reads current Bot treasury status, Base Uniswap quote, and ENSv2
+  Sepolia preflight in the browser, with a visible unavailable state on errors.
+  These are read-only observations; the three-path table is controlled test
+  evidence.
 - The small edge Worker serving that page from public Pages is included at
   workers/ethglobal-demo/worker.js.
 - A World ID for Agents sandbox OIDC adapter in

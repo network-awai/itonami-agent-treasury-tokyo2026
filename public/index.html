@@ -21,6 +21,11 @@
     .flow span{padding:8px 12px;border-radius:999px;background:var(--hig-color-secondary-system-background);border:1px solid var(--hig-color-separator)}
     .state{font-weight:700}
     .held{color:#9a6200}.verified{color:#087341}.pending{color:#955c00}
+    .livegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+    .livegrid article{border:1px solid var(--hig-color-separator);border-radius:12px;padding:16px}
+    .livegrid h3{font-size:1rem;margin:0 0 8px}
+    .livegrid output{display:block;white-space:pre-line;font-variant-numeric:tabular-nums}
+    button{font:inherit;border:1px solid var(--hig-color-separator);border-radius:9px;background:var(--hig-color-secondary-system-background);color:inherit;padding:8px 12px;cursor:pointer}
     table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid var(--hig-color-separator);padding:12px 8px;vertical-align:top}
     a{color:var(--hig-color-tint)}a:focus-visible{outline:2px solid currentColor;outline-offset:3px}
     code{font-size:.9em;overflow-wrap:anywhere}
@@ -41,6 +46,16 @@
     <p><a href="https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026">Check ENSv2 Sepolia name availability and registration price</a>. This reads the official ETH Registrar for a candidate agent label and its MockUSDC one-year price. It does not register a name, bind a wallet, or delegate ENS permissions.</p>
     <p>The authenticated Bot economy also prepares an unsigned SwapRouter02 plan for a linked wallet, including balance, allowance, recipient, minimum-output, and deadline checks. No approval or swap transaction has been broadcast.</p>
   </section>
+  <section class="card" aria-labelledby="live-heading">
+    <h2 id="live-heading">Live read-only checks</h2>
+    <p>These values come from the deployed APIs when this page loads. A failed request is shown as unavailable. The quote and ENS preflight do not submit transactions.</p>
+    <div class="livegrid">
+      <article><h3>Bot treasury</h3><output id="live-economy" aria-live="polite">Reading live state…</output></article>
+      <article><h3>Uniswap v3 Base</h3><output id="live-swap" aria-live="polite">Reading live quote…</output></article>
+      <article><h3>ENSv2 Sepolia</h3><output id="live-ens" aria-live="polite">Reading registrar…</output></article>
+    </div>
+    <p><button type="button" id="refresh-live">Refresh live checks</button> <small id="live-checked-at"></small></p>
+  </section>
   <section class="card"><h2>Three-path demo evidence</h2>
     <table><thead><tr><th>Path</th><th>Observed result</th><th>Evidence level</th></tr></thead><tbody>
       <tr><th>Clear payee</th><td>Policy-admitted x402 challenge + clear Intercepta-shaped response → <code>admitted-simulation</code>; no transfer.</td><td class="state pending">Controlled Durable Object test</td></tr>
@@ -54,4 +69,34 @@
     <p><a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026">Review the public event-time source</a> · <a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026/blob/main/README.md">Read the evidence boundaries</a></p>
   </section>
   <p>ENSv2 Sepolia registration, live World ID approval, Uniswap swap execution, a live Intercepta scan, and testnet settlement remain open qualification work. This page will be updated as each has verifiable evidence.</p>
+  <script type="module">
+    const endpoints = [
+      ["live-economy", "https://bots.itonami.cloud/v1/bot-economy", data =>
+        `Ledger: ${data.pool.ledger_mode}\nRisk gate: ${data.execution.counterparty_screening}\nReal fund movement: ${data.execution.real_fund_movement}`],
+      ["live-swap", "https://bots.itonami.cloud/v1/bot-economy/swap-quote", data =>
+        data.status === "quote-only" && data.payment_submitted === false
+          ? `0.005 WETH → ${Number(data.amount_out_micros) / 1e6} USDC\n50 bps floor: ${Number(data.min_amount_out_micros) / 1e6} USDC\nQuote only; no swap`
+          : "Quote unavailable; no swap"],
+      ["live-ens", "https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026", data =>
+        `${data.name}: ${data.status}\nRegistered: ${data.registered}\nTransaction submitted: ${data.transaction_submitted}`],
+    ];
+    async function refresh() {
+      document.getElementById("refresh-live").disabled = true;
+      await Promise.all(endpoints.map(async ([id, url, format]) => {
+        const output = document.getElementById(id);
+        output.textContent = "Reading live API…";
+        try {
+          const response = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(8000) });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          output.textContent = format(await response.json());
+        } catch (_) {
+          output.textContent = "Unavailable; no result claimed";
+        }
+      }));
+      document.getElementById("live-checked-at").textContent = `Checked ${new Date().toLocaleTimeString()}`;
+      document.getElementById("refresh-live").disabled = false;
+    }
+    document.getElementById("refresh-live").addEventListener("click", refresh);
+    refresh();
+  </script>
 </main></body></html>
