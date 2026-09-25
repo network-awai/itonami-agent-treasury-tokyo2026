@@ -38,6 +38,7 @@
     <p>The deployed Worker reports its current pool mode and screening configuration through <a href="/api/v1/bot-economy">the public economy API</a>. At publication, the pool was in <strong>simulation</strong> mode, with <strong>no real fund movement</strong>, and Intercepta screening was <strong>held pending a sandbox key</strong>. The API is the current authority; this text is a timestamped observation.</p>
     <p class="state held">Fail closed: a missing key, API error, or unreadable risk verdict cannot reach the signer.</p>
     <p><a href="https://bots.itonami.cloud/v1/bot-economy/swap-quote">Check the live Uniswap v3 Base treasury top-up quote</a>. This reads QuoterV2 onchain and returns a 50 bps minimum output for a fixed 0.005 WETH input. It does not submit a swap.</p>
+    <p><a href="https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026">Check ENSv2 Sepolia name availability and registration price</a>. This reads the official ETH Registrar for a candidate agent label and its MockUSDC one-year price. It does not register a name, bind a wallet, or delegate ENS permissions.</p>
     <p>The authenticated Bot economy also prepares an unsigned SwapRouter02 plan for a linked wallet, including balance, allowance, recipient, minimum-output, and deadline checks. No approval or swap transaction has been broadcast.</p>
   </section>
   <section class="card"><h2>Three-path demo evidence</h2>

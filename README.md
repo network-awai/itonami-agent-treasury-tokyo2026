@@ -22,6 +22,10 @@ private workspace code.
   PKCE and verifies the signed ID token, issuer, audience, nonce and
   authentication time on the server. Tests use a local signing key; they are
   not a live World verification.
+- A read-only ENSv2 Sepolia preflight at
+  https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026 .
+  It queries the official ETH Registrar for live availability and one-year
+  MockUSDC price. It does not register a name or assign agent permissions.
 
 The live Bot economy at bots.itonami.cloud still reports simulation ledger
 mode and no real fund movement. Without an Intercepta sandbox key,
