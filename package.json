@@ -1,0 +1,12 @@
+{
+  "name": "itonami-agent-treasury-tokyo2026",
+  "private": false,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "viem": "2.56.9"
+  }
+}

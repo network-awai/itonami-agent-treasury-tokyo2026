@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en" data-appearance="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="Itonami Agent Treasury: an honest ETHGlobal Tokyo 2026 build log and live x402 risk-gate status.">
+  <title>Itonami Agent Treasury — ETHGlobal Tokyo 2026</title>
+  <base href="https://itonami.cloud/">
+  <link rel="stylesheet" href="/css/theme.css">
+  <style>
+    body{margin:0;background:var(--hig-color-system-grouped-background);color:var(--hig-color-label);font:16px/1.6 system-ui,sans-serif}
+    main{max-width:850px;margin:auto;padding:48px 20px 80px}
+    h1{font-size:clamp(2rem,5vw,3.4rem);line-height:1.12;margin:0 0 16px}
+    h2{font-size:1.4rem;margin:0 0 12px}
+    p{margin:0 0 16px}
+    .eyebrow{font-size:.8rem;letter-spacing:.11em;text-transform:uppercase;color:var(--hig-color-secondary-label)}
+    .lead{font-size:1.2rem;max-width:690px}
+    .card{background:var(--hig-color-secondary-system-background);border:1px solid var(--hig-color-separator);border-radius:16px;padding:24px;margin:24px 0}
+    .flow{display:flex;gap:8px;flex-wrap:wrap;margin:24px 0}
+    .flow span{padding:8px 12px;border-radius:999px;background:var(--hig-color-secondary-system-background);border:1px solid var(--hig-color-separator)}
+    .state{font-weight:700}
+    .held{color:#9a6200}.verified{color:#087341}.pending{color:#955c00}
+    table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid var(--hig-color-separator);padding:12px 8px;vertical-align:top}
+    a{color:var(--hig-color-tint)}a:focus-visible{outline:2px solid currentColor;outline-offset:3px}
+    code{font-size:.9em;overflow-wrap:anywhere}
+    nav{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:52px}
+    @media(max-width:600px){table,tbody,tr,td,th{display:block}th{border-bottom:0;padding-bottom:0}td{padding-top:0}}
+  </style>
+</head>
+<body><main>
+  <nav aria-label="Navigation"><a href="https://itonami.cloud/">Itonami</a><a href="https://itonami.cloud/bots/">Bots status</a><a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026">Source and review</a></nav>
+  <p class="eyebrow">ETHGlobal Tokyo 2026 · event-time build</p>
+  <h1>Agent Treasury</h1>
+  <p class="lead">An Itonami Bot checks an x402 payee against Intercepta before a delegated signer can act. Missing or risky screening stops the payment.</p>
+  <div class="flow" aria-label="Decision order"><span>Identity</span><span>Spending policy</span><span>Counterparty risk</span><span>Human approval</span><span>Settlement</span></div>
+  <section class="card"><h2>Live system state</h2>
+    <p>The deployed Worker reports its current pool mode and screening configuration through <a href="/api/v1/bot-economy">the public economy API</a>. At publication, the pool was in <strong>simulation</strong> mode, with <strong>no real fund movement</strong>, and Intercepta screening was <strong>held pending a sandbox key</strong>. The API is the current authority; this text is a timestamped observation.</p>
+    <p class="state held">Fail closed: a missing key, API error, or unreadable risk verdict cannot reach the signer.</p>
+    <p><a href="https://bots.itonami.cloud/v1/bot-economy/swap-quote">Check the live Uniswap v3 Base treasury top-up quote</a>. This reads QuoterV2 onchain and returns a 50 bps minimum output for a fixed 0.005 WETH input. It does not submit a swap.</p>
+    <p>The authenticated Bot economy also prepares an unsigned SwapRouter02 plan for a linked wallet, including balance, allowance, recipient, minimum-output, and deadline checks. No approval or swap transaction has been broadcast.</p>
+  </section>
+  <section class="card"><h2>Three-path demo evidence</h2>
+    <table><thead><tr><th>Path</th><th>Observed result</th><th>Evidence level</th></tr></thead><tbody>
+      <tr><th>Clear payee</th><td>Policy-admitted x402 challenge + clear Intercepta-shaped response → <code>admitted-simulation</code>; no transfer.</td><td class="state pending">Controlled Durable Object test</td></tr>
+      <tr><th>Risky payee</th><td>Critical risk verdict → <code>refused-counterparty-risk</code>; zero signer calls and zero debt.</td><td class="state pending">Controlled Durable Object test</td></tr>
+      <tr><th>High-value action</th><td>Fresh World ID for Agents approval is planned for the protected action.</td><td class="state held">Not yet implemented or measured</td></tr>
+    </tbody></table>
+    <p>These controlled responses are <strong>not</strong> a live Intercepta scan or a qualifying World ID proof. No $10 or $1,000 payment is claimed.</p>
+  </section>
+  <section class="card"><h2>What changed during the event</h2>
+    <p>The Intercepta Quick Scan risk gate, fail-closed decision, live Uniswap quote, unsigned swap plan, tests, and public readiness field were added after hacking began. Bots, the x402 challenge validator, spending caps, delegated signer boundary, and trial ledger already existed before this event.</p>
+    <p><a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026">Review the public event-time source</a> · <a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026/blob/main/README.md">Read the evidence boundaries</a></p>
+  </section>
+  <p>World ID and ENSv2 are the next prize integrations. ENSv2 Sepolia registration, World ID approval, Uniswap swap execution, a live Intercepta scan, and testnet settlement remain open qualification work. This page will be updated as each has verifiable evidence.</p>
+</main></body></html>
