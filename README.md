@@ -17,8 +17,9 @@ private workspace code.
 - A public demo evidence page served at treasury.itonami.cloud.
 - The small edge Worker serving that page from public Pages is included at
   workers/ethglobal-demo/worker.js.
-- An unconfigured World ID for Agents sandbox OIDC adapter in
-  workers/grok-bots/world_oidc.js. It requests fresh authentication with
+- A World ID for Agents sandbox OIDC adapter in
+  workers/grok-bots/world_oidc.js, plus the exact-payment hash in
+  workers/grok-bots/world_action.js. It requests fresh authentication with
   PKCE and verifies the signed ID token, issuer, audience, nonce and
   authentication time on the server. Tests use a local signing key; they are
   not a live World verification.
@@ -32,12 +33,14 @@ mode and no real fund movement. Without an Intercepta sandbox key,
 counterparty screening holds payments. No swap or payment has been signed or
 broadcast. Controlled test responses are not live sponsor API evidence.
 
-World ID for Agents approval and ENSv2 Sepolia identity are planned
-integrations, not completed prize qualifications. The OIDC adapter is not
-yet wired into the running Bot action or a registered World client. Its
-server-side transaction must be single-use and bound to the exact action
-before any protected action can occur. The high-value approval path has
-not been measured. The public source does not contain the existing
+World ID for Agents approval and ENSv2 Sepolia identity are not completed
+prize qualifications. The OIDC adapter is wired into the private running
+Bot Durable Object: authenticated start, one-time callback state, and a
+payment gate bound to the exact x402 challenge. The production Worker has no
+registered World client, so no live human verification has completed. The
+default approval threshold is $50, above the current trial per-call cap.
+Controlled tests use a lower threshold to exercise the gate. The public
+source does not contain the existing
 Itonami Bot economy, delegated signer, or authentication implementation.
 
 ## Reproduce

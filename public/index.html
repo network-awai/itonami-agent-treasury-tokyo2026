@@ -45,13 +45,13 @@
     <table><thead><tr><th>Path</th><th>Observed result</th><th>Evidence level</th></tr></thead><tbody>
       <tr><th>Clear payee</th><td>Policy-admitted x402 challenge + clear Intercepta-shaped response → <code>admitted-simulation</code>; no transfer.</td><td class="state pending">Controlled Durable Object test</td></tr>
       <tr><th>Risky payee</th><td>Critical risk verdict → <code>refused-counterparty-risk</code>; zero signer calls and zero debt.</td><td class="state pending">Controlled Durable Object test</td></tr>
-      <tr><th>High-value action</th><td>Fresh World ID for Agents approval is planned for the protected action.</td><td class="state held">Not yet implemented or measured</td></tr>
+      <tr><th>High-value action</th><td>Fresh World ID for Agents OIDC is wired to an exact x402 action with single-use state. Cancellation, changed action and replay are denied in controlled tests. The live Worker has no registered World client.</td><td class="state pending">Controlled test; live verification pending</td></tr>
     </tbody></table>
     <p>These controlled responses are <strong>not</strong> a live Intercepta scan or a qualifying World ID proof. No $10 or $1,000 payment is claimed.</p>
   </section>
   <section class="card"><h2>What changed during the event</h2>
-    <p>The Intercepta Quick Scan risk gate, fail-closed decision, live Uniswap quote, unsigned swap plan, tests, and public readiness field were added after hacking began. Bots, the x402 challenge validator, spending caps, delegated signer boundary, and trial ledger already existed before this event.</p>
+    <p>The Intercepta Quick Scan risk gate, fail-closed decision, World OIDC action gate, live Uniswap quote, unsigned swap plan, tests, and public readiness field were added after hacking began. Bots, the x402 challenge validator, spending caps, delegated signer boundary, and trial ledger already existed before this event.</p>
     <p><a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026">Review the public event-time source</a> · <a href="https://github.com/network-awai/itonami-agent-treasury-tokyo2026/blob/main/README.md">Read the evidence boundaries</a></p>
   </section>
-  <p>World ID and ENSv2 are the next prize integrations. ENSv2 Sepolia registration, World ID approval, Uniswap swap execution, a live Intercepta scan, and testnet settlement remain open qualification work. This page will be updated as each has verifiable evidence.</p>
+  <p>ENSv2 Sepolia registration, live World ID approval, Uniswap swap execution, a live Intercepta scan, and testnet settlement remain open qualification work. This page will be updated as each has verifiable evidence.</p>
 </main></body></html>

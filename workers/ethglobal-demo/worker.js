@@ -1,5 +1,5 @@
 import { preflightEnsV2Name } from "../grok-bots/ensv2_preflight.js";
-const DEMO_URL = "https://itonami-agent-treasury-tokyo2026.pages.dev/";
+const DEMO_URL = "https://e3dc5858.itonami-agent-treasury-tokyo2026.pages.dev/";
 const DEMO_PATH = "/";
 
 export default {
