@@ -15,6 +15,8 @@ private workspace code.
   transaction planning with balance, allowance, minimum-output, recipient
   and deadline checks.
 - A public demo evidence page served at treasury.itonami.cloud.
+- The small edge Worker serving that page from public Pages is included at
+  workers/ethglobal-demo/worker.js.
 
 The live Bot economy at bots.itonami.cloud still reports simulation ledger
 mode and no real fund movement. Without an Intercepta sandbox key,
@@ -41,3 +43,6 @@ The existing Bot economy was built before ETHGlobal Tokyo 2026.
 ## License
 
 MIT. See LICENSE.
+
+The Uniswap feedback draft is in FEEDBACK.md. The sponsor feedback form
+has not yet been submitted.
