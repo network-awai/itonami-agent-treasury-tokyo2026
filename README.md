@@ -65,3 +65,6 @@ MIT. See LICENSE.
 
 The Uniswap feedback draft is in FEEDBACK.md. The sponsor feedback form
 has not yet been submitted.
+
+The [submission copy](SUBMISSION.md) maps each sponsor requirement to the
+relevant source lines and states which live qualifications remain incomplete.
