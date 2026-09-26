@@ -26,6 +26,11 @@
     .livegrid h3{font-size:1rem;margin:0 0 8px}
     .livegrid output{display:block;white-space:pre-line;font-variant-numeric:tabular-nums}
     button{font:inherit;border:1px solid var(--hig-color-separator);border-radius:9px;background:var(--hig-color-secondary-system-background);color:inherit;padding:8px 12px;cursor:pointer}
+    button:disabled{opacity:.5;cursor:not-allowed}
+    input{font:inherit;box-sizing:border-box;max-width:100%;width:100%;padding:9px;border:1px solid var(--hig-color-separator);border-radius:8px;background:var(--hig-color-secondary-system-background);color:inherit}
+    label{display:block;margin:10px 0}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    .receipt{display:block;overflow-wrap:anywhere;white-space:pre-wrap;margin:12px 0}
     table{width:100%;border-collapse:collapse}td,th{text-align:left;border-bottom:1px solid var(--hig-color-separator);padding:12px 8px;vertical-align:top}
     a{color:var(--hig-color-tint)}a:focus-visible{outline:2px solid currentColor;outline-offset:3px}
     code{font-size:.9em;overflow-wrap:anywhere}
@@ -46,6 +51,24 @@
     <p><a href="https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026">Check ENSv2 Sepolia name availability and registration price</a>. This reads the official ETH Registrar for a candidate agent label and its MockUSDC one-year price. It does not register a name, bind a wallet, or delegate ENS permissions.</p>
     <p>The authenticated Bot economy also prepares an unsigned SwapRouter02 plan for a linked wallet, including balance, allowance, recipient, minimum-output, and deadline checks. No approval or swap transaction has been broadcast.</p>
   </section>
+  <section class="card" aria-labelledby="wallet-heading">
+    <h2 id="wallet-heading">Wallet handoff</h2>
+    <p>These controls prepare real wallet transactions. Nothing is sent until you click a transaction button and approve it in your wallet. Each step shows a receipt or a refusal.</p>
+    <div class="actions"><button type="button" id="connect-wallet">Connect wallet</button><output id="wallet-address">No wallet connected</output></div>
+    <h3>Uniswap top-up · Base</h3>
+    <p>Fixed input: 0.005 WETH, output: USDC to the connected wallet, 50 bps price floor. The wallet may need WETH approval first.</p>
+    <div class="actions"><button type="button" id="prepare-swap">Prepare fresh quote</button><button type="button" id="approve-weth" disabled>Approve WETH</button><button type="button" id="submit-swap" disabled>Submit swap in wallet</button></div>
+    <output class="receipt" id="swap-result" aria-live="polite">No transaction planned.</output>
+    <h3>ENSv2 agent name · Sepolia</h3>
+    <p>Provide a deployed ENSv2 Permissioned Resolver for your wallet. ENSv2 registration uses Sepolia MockUSDC and a commit-reveal wait. The registration plan binds the name, wallet, secret, and resolver.</p>
+    <label>Agent label<input id="ens-label" value="itonami-agent-treasury-2026" autocomplete="off"></label>
+    <label>Deployed Permissioned Resolver address<input id="ens-resolver" placeholder="0x…" autocomplete="off"></label>
+    <div class="actions"><button type="button" id="prepare-ens">Prepare registration</button><button type="button" id="mint-ens" disabled>Mint test token</button><button type="button" id="approve-ens" disabled>Approve test token</button><button type="button" id="commit-ens" disabled>Commit name</button><button type="button" id="register-ens" disabled>Register after wait</button></div>
+    <output class="receipt" id="ens-result" aria-live="polite">No registration planned.</output>
+  </section>
+  <section class="card"><h2>1inch Aqua / SwapVM</h2>
+    <p><a href="https://bots.itonami.cloud/v1/bot-economy/aqua-contracts">Check the live Base Aqua registry and SwapVM router</a>. The Bot API can read the virtual balance of a specified maker, app, strategy hash and token. This is a read-only integration; no Aqua strategy has been shipped or traded by this treasury.</p>
+  </section>
   <section class="card" aria-labelledby="live-heading">
     <h2 id="live-heading">Live read-only checks</h2>
     <p>These values come from the deployed APIs when this page loads. A failed request is shown as unavailable. The quote and ENS preflight do not submit transactions.</p>
@@ -53,6 +76,7 @@
       <article><h3>Bot treasury</h3><output id="live-economy" aria-live="polite">Reading live state…</output></article>
       <article><h3>Uniswap v3 Base</h3><output id="live-swap" aria-live="polite">Reading live quote…</output></article>
       <article><h3>ENSv2 Sepolia</h3><output id="live-ens" aria-live="polite">Reading registrar…</output></article>
+      <article><h3>1inch Aqua · Base</h3><output id="live-aqua" aria-live="polite">Reading contracts…</output></article>
     </div>
     <p><button type="button" id="refresh-live">Refresh live checks</button> <small id="live-checked-at"></small></p>
   </section>
@@ -79,6 +103,8 @@
           : "Quote unavailable; no swap"],
       ["live-ens", "https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026", data =>
         `${data.name}: ${data.status}\nRegistered: ${data.registered}\nTransaction submitted: ${data.transaction_submitted}`],
+      ["live-aqua", "https://bots.itonami.cloud/v1/bot-economy/aqua-contracts", data =>
+        `Aqua + SwapVM deployed: ${data.contracts_deployed}\nTreasury position verified: ${data.treasury_position_verified}\nTransfer submitted: ${data.transfer_submitted}`],
     ];
     async function refresh() {
       document.getElementById("refresh-live").disabled = true;
@@ -98,5 +124,138 @@
     }
     document.getElementById("refresh-live").addEventListener("click", refresh);
     refresh();
+  </script>
+  <script type="module">
+    let wallet = null;
+    let swapPlan = null;
+    let ensPlan = null;
+    let ensApproved = false;
+    let ensCommitTime = null;
+    const byId = id => document.getElementById(id);
+    const show = (id, value) => { byId(id).textContent = value; };
+    async function ensureWallet(chainId) {
+      if (!window.ethereum?.request) throw Error("Open this page in a browser with an EVM wallet.");
+      if (!wallet) {
+        const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+        wallet = accounts?.[0] ?? null;
+        if (!/^0x[0-9a-f]{40}$/i.test(wallet ?? "")) throw Error("Wallet address unavailable.");
+        show("wallet-address", wallet);
+      }
+      if (chainId) await window.ethereum.request({ method: "wallet_switchEthereumChain",
+        params: [{ chainId }] });
+      return wallet;
+    }
+    async function postPlan(path, body) {
+      const response = await fetch(new URL(path, location.origin), { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify(body), cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok || data.status !== "unsigned-plan") throw Error(data.reason ?? `HTTP ${response.status}`);
+      return data;
+    }
+    async function sendAndWait(tx, chainId, outputId) {
+      await ensureWallet(chainId);
+      const hash = await window.ethereum.request({ method: "eth_sendTransaction",
+        params: [{ from: wallet, to: tx.to, data: tx.data, value: "0x0" }] });
+      show(outputId, `Submitted ${hash}. Waiting for receipt…`);
+      for (let attempt = 0; attempt < 60; attempt++) {
+        const receipt = await window.ethereum.request({ method: "eth_getTransactionReceipt", params: [hash] });
+        if (receipt) {
+          if (receipt.status !== "0x1") throw Error(`Transaction reverted: ${hash}`);
+          return { hash, receipt };
+        }
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      throw Error(`Receipt pending; check the wallet explorer for ${hash}`);
+    }
+    const busy = new Set();
+    async function run(id, task) {
+      if (busy.has(id)) return;
+      busy.add(id);
+      try { await task(); }
+      catch (error) { show(id.startsWith("prepare-swap") || id === "approve-weth" || id === "submit-swap"
+        ? "swap-result" : id === "connect-wallet" ? "wallet-address" : "ens-result",
+      `Held: ${error.message}`); }
+      finally { busy.delete(id); }
+    }
+    byId("connect-wallet").addEventListener("click", () => run("connect-wallet", () => ensureWallet()));
+    byId("prepare-swap").addEventListener("click", () => run("prepare-swap", async () => {
+      const recipient = await ensureWallet("0x2105");
+      swapPlan = await postPlan("/swap-plan", { recipient });
+      if (swapPlan.wallet.toLowerCase() !== recipient.toLowerCase() || swapPlan.chain_id !== 8453)
+        throw Error("Plan does not match this wallet or Base.");
+      byId("approve-weth").disabled = !swapPlan.approval_required;
+      byId("submit-swap").disabled = swapPlan.approval_required;
+      show("swap-result", `Fresh plan: 0.005 WETH → at least ${Number(swapPlan.min_amount_out_micros) / 1e6} USDC. Approval required: ${swapPlan.approval_required}. No transaction sent.`);
+    }));
+    byId("approve-weth").addEventListener("click", () => run("approve-weth", async () => {
+      if (!swapPlan?.approval_required) throw Error("Prepare a fresh swap first.");
+      const { hash } = await sendAndWait(swapPlan.approval_transaction, "0x2105", "swap-result");
+      swapPlan = null;
+      byId("submit-swap").disabled = true;
+      show("swap-result", `WETH approval confirmed: ${hash}. Prepare a fresh quote before submitting the swap.`);
+    }));
+    byId("submit-swap").addEventListener("click", () => run("submit-swap", async () => {
+      if (!swapPlan) throw Error("Prepare a swap first.");
+      const fresh = await postPlan("/swap-plan", { recipient: await ensureWallet("0x2105") });
+      if (fresh.approval_required || fresh.wallet.toLowerCase() !== wallet.toLowerCase()
+          || fresh.deadline_unix <= Date.now() / 1000) throw Error("Fresh plan is not executable.");
+      const { hash } = await sendAndWait(fresh.swap_transaction, "0x2105", "swap-result");
+      swapPlan = null;
+      byId("submit-swap").disabled = true;
+      show("swap-result", `Base swap transaction confirmed: ${hash}. Check token deltas in the wallet receipt.`);
+    }));
+    byId("prepare-ens").addEventListener("click", () => run("prepare-ens", async () => {
+      if (ensCommitTime) throw Error("Finish the current commitment before preparing a new secret.");
+      const owner = await ensureWallet("0xaa36a7");
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      const secret = "0x" + Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+      ensPlan = await postPlan("/ens-registration-plan", {
+        label: byId("ens-label").value.trim(), resolver: byId("ens-resolver").value.trim(),
+        owner, secret,
+      });
+      ensApproved = false;
+      ensCommitTime = null;
+      byId("mint-ens").disabled = false;
+      byId("approve-ens").disabled = false;
+      byId("commit-ens").disabled = true;
+      byId("register-ens").disabled = true;
+      show("ens-result", `Unsigned plan for ${ensPlan.name}; owner ${ensPlan.owner}; ${Number(ensPlan.payment_amount_micros) / 1e6} MockUSDC, minimum commitment wait ${ensPlan.min_commitment_age_seconds}s. Keep this page open until registration completes.`);
+    }));
+    byId("mint-ens").addEventListener("click", () => run("mint-ens", async () => {
+      if (!ensPlan || ensPlan.owner.toLowerCase() !== (await ensureWallet("0xaa36a7")).toLowerCase())
+        throw Error("Prepare an ENS plan for this wallet first.");
+      const { hash } = await sendAndWait(ensPlan.mint_transaction, "0xaa36a7", "ens-result");
+      byId("mint-ens").disabled = true;
+      show("ens-result", `Sepolia MockUSDC mint confirmed: ${hash}. Approve the registrar next.`);
+    }));
+    byId("approve-ens").addEventListener("click", () => run("approve-ens", async () => {
+      if (!ensPlan || ensPlan.owner.toLowerCase() !== (await ensureWallet("0xaa36a7")).toLowerCase())
+        throw Error("Prepare an ENS plan for this wallet first.");
+      const { hash } = await sendAndWait(ensPlan.approval_transaction, "0xaa36a7", "ens-result");
+      ensApproved = true;
+      byId("commit-ens").disabled = false;
+      show("ens-result", `MockUSDC approval confirmed: ${hash}. Commit the name next.`);
+    }));
+    byId("commit-ens").addEventListener("click", () => run("commit-ens", async () => {
+      if (!ensPlan || !ensApproved) throw Error("Approve the registration token first.");
+      const { hash, receipt } = await sendAndWait(ensPlan.commit_transaction, "0xaa36a7", "ens-result");
+      const block = await window.ethereum.request({ method: "eth_getBlockByNumber",
+        params: [receipt.blockNumber, false] });
+      ensCommitTime = Number.parseInt(block.timestamp, 16);
+      byId("register-ens").disabled = false;
+      show("ens-result", `Commit confirmed: ${hash}. Wait until ${new Date((ensCommitTime + ensPlan.min_commitment_age_seconds) * 1000).toLocaleTimeString()} before registration.`);
+    }));
+    byId("register-ens").addEventListener("click", () => run("register-ens", async () => {
+      if (!ensPlan || !ensCommitTime || !ensApproved) throw Error("Commit and approval are required.");
+      if (ensPlan.owner.toLowerCase() !== (await ensureWallet("0xaa36a7")).toLowerCase())
+        throw Error("Connected wallet changed.");
+      const now = Date.now() / 1000;
+      if (now < ensCommitTime + ensPlan.min_commitment_age_seconds
+          || now > ensCommitTime + ensPlan.max_commitment_age_seconds)
+        throw Error("Commitment is too young or expired.");
+      const { hash } = await sendAndWait(ensPlan.register_transaction, "0xaa36a7", "ens-result");
+      byId("register-ens").disabled = true;
+      show("ens-result", `ENSv2 register transaction confirmed: ${hash}. Verify ownership and resolver records on Sepolia before treating the agent identity as active.`);
+    }));
   </script>
 </main></body></html>

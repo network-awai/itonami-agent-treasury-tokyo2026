@@ -27,8 +27,13 @@ unavailable verdicts. For higher-value actions, a fresh World ID for Agents
 OIDC request is bound to a hash of the exact payment proposal; the backend
 validates the signed identity response and consumes an approval only once.
 The treasury also reads a live Uniswap v3 Base quote and prepares bounded,
-unsigned SwapRouter02 calldata for a linked wallet. A live ENSv2 Sepolia
-preflight reads the official registrar for an agent name and price.
+unsigned SwapRouter02 calldata for a linked wallet. The public demo offers an
+explicit wallet handoff for approval and swap. A live ENSv2 Sepolia preflight
+reads the official registrar for an agent name and price, while a separate
+registration planner prepares commit, approval, and reveal transactions for a
+user-provided wallet and deployed resolver. A supporting 1inch Aqua/SwapVM
+reader verifies the official Base contracts and can inspect a named strategy's
+virtual token balance; this is not an Aqua app or a shipped strategy.
 
 The public demo separates live read-only API observations from controlled
 test paths. The Bot ledger is currently in simulation mode. No real payment,
@@ -57,6 +62,9 @@ Intercepta screening is held because its sandbox key is not configured.
 - Recipient-bound unsigned SwapRouter02 plan, wallet balance and allowance,
   50 bps minimum output, and two-minute deadline:
   [uniswap_quote.js](workers/grok-bots/uniswap_quote.js#L82-L126).
+- The browser handoff in [public/index.html](public/index.html) requests each
+  signature from the connected wallet and waits for a receipt. No receipt has
+  yet been captured for this project.
 - Public [FEEDBACK.md](FEEDBACK.md) explains integration friction.
 - **Not yet qualified:** no swap signature/broadcast/receipt, and the
   required Uniswap Developer Feedback Form has not been submitted.
@@ -64,9 +72,21 @@ Intercepta screening is held because its sandbox key is not configured.
 ### ENS
 
 - Dynamic ENSv2 Sepolia availability and MockUSDC price from the official
-  ETH Registrar: [ensv2_preflight.js](workers/grok-bots/ensv2_preflight.js#L13-L40).
+  ETH Registrar: [ensv2_preflight.js](workers/grok-bots/ensv2_preflight.js).
+- An unsigned commit-reveal registration plan validates the owner and a
+  deployed resolver's owner roles, reads the commitment and age bounds from the official
+  registrar, and returns exact transaction calldata.
 - **Not yet qualified:** no registered agent name, resolver record, or
   delegated ENSv2 permission. The preflight is read-only.
+
+### 1inch (supporting integration; no prize selected)
+
+- The Bot and public demo read the official Base Aqua registry and SwapVM
+  router deployment and expose an exact virtual-balance lookup:
+  [aqua_position.js](workers/grok-bots/aqua_position.js).
+- **Not a 1inch prize entry:** no Aqua app, SwapVM strategy shipped, or
+  onchain token transfer. The three selected sponsor families remain World,
+  Uniswap Foundation, and ENS.
 
 ## Event-time and AI attribution
 
@@ -74,7 +94,8 @@ Before hacking began, Itonami already had Bots, an x402 challenge validator,
 spending caps, a delegated signer boundary, and a simulated loan-position
 ledger. During ETHGlobal Tokyo 2026, the team added the Intercepta risk
 adapter, Uniswap quote and unsigned plan, World OIDC adapter and action gate,
-ENSv2 preflight, public demo, and tests. The private integration is in
+ENSv2 preflight and registration planner, 1inch Aqua reader, public demo,
+and tests. The private integration is in
 [draft PR #677](https://github.com/network-awai/cloud-itonami/pull/677)
 (access restricted); the event-time standalone modules and reproducible tests
 are in this public repository.

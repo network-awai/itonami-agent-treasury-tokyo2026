@@ -14,7 +14,10 @@ private workspace code.
 - Uniswap v3 QuoterV2 WETH-to-USDC quote on Base and unsigned SwapRouter02
   transaction planning with balance, allowance, minimum-output, recipient
   and deadline checks.
-- A public demo evidence page served at treasury.itonami.cloud.
+- A public demo evidence page served at treasury.itonami.cloud, with an
+  explicit browser-wallet handoff for Uniswap Base approval/swap and ENSv2
+  Sepolia approval/commit/register. Each operation needs a user wallet click;
+  no transaction has been submitted by the project team.
 - The demo reads current Bot treasury status, Base Uniswap quote, and ENSv2
   Sepolia preflight in the browser, with a visible unavailable state on errors.
   These are read-only observations; the three-path table is controlled test
@@ -31,6 +34,15 @@ private workspace code.
   https://treasury.itonami.cloud/ens-preflight?label=itonami-agent-treasury-2026 .
   It queries the official ETH Registrar for live availability and one-year
   MockUSDC price. It does not register a name or assign agent permissions.
+- An unsigned ENSv2 registration plan that binds a name, wallet, random secret,
+  and deployed resolver to the official registrar's commitment. It reads the
+  resolver interface and owner roles, then reads the live price and commitment
+  age bounds before returning MockUSDC mint,
+  approval, commit, and register calldata. A resolver and the user's Sepolia
+  wallet are required.
+- A live read-only check of the official 1inch Aqua registry and SwapVM router
+  on Base, plus a position lookup by maker, app, strategy hash, and token.
+  No Aqua strategy has been shipped and no 1inch swap has been performed.
 
 The live Bot economy at bots.itonami.cloud still reports simulation ledger
 mode and no real fund movement. Without an Intercepta sandbox key,
@@ -53,6 +65,10 @@ Run npm install, then npm test. Read the current quote at
 https://bots.itonami.cloud/v1/bot-economy/swap-quote .
 The authenticated POST /v1/bot-economy/swap-plan binds its recipient to
 the linked Itonami wallet. It returns unsigned calldata and does not transact.
+The public demo POST /swap-plan binds its recipient to the browser wallet and
+rechecks balance, allowance, quote and deadline. It can hand the resulting
+calldata to an EIP-1193 wallet after an explicit click. Transaction receipts
+would be shown on the page if a user signed; none is claimed here.
 
 ## AI use
 
