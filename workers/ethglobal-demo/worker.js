@@ -1,7 +1,7 @@
 import { preflightEnsV2Name, planEnsV2Registration } from "../grok-bots/ensv2_preflight.js";
 import { inspectAquaPosition } from "../grok-bots/aqua_position.js";
 import { planTreasuryTopup } from "../grok-bots/uniswap_quote.js";
-const DEMO_URL = "https://e5b98a7e.itonami-agent-treasury-tokyo2026.pages.dev/";
+const DEMO_URL = "https://2af8cdf7.itonami-agent-treasury-tokyo2026.pages.dev/";
 const DEMO_PATH = "/";
 
 export default {
